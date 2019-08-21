@@ -2,6 +2,7 @@
 
 # Copyright  2015 Tokyo Institute of Technology (Authors: Takafumi Moriya and Takahiro Shinozaki)
 #            2015 Mitsubishi Electric Research Laboratories (Author: Shinji Watanabe)
+#	     2019 Jake Tao
 # Apache 2.0
 # Acknowledgement  This work was supported by JSPS KAKENHI Grant Number 26280055.
 
@@ -148,11 +149,12 @@ if [ ! -e $outd/.done_make_lexicon ]; then
     lexicon=$outd/lexicon
     rm -f $outd/lexicon/lexicon.txt
     mkdir -p $lexicon
-    cat $outd/*/*/*.4lex | grep -v "+ー" | grep -v "++" | grep -v "×" > $lexicon/lexicon.txt
-    sort -u $lexicon/lexicon.txt > $lexicon/lexicon_htk.txt
-    local/csj_make_trans/vocab2dic.pl -p local/csj_make_trans/kana2phone -e $lexicon/ERROR_v2d -o $lexicon/lexicon.txt $lexicon/lexicon_htk.txt
-    cut -d'+' -f1,3- $lexicon/lexicon.txt >$lexicon/lexicon_htk.txt
-    cut -f1,3- $lexicon/lexicon_htk.txt | perl -ape 's:\t: :g' >$lexicon/lexicon.txt
+    cat $outd/*/*/*.4lex $outd/*/*/*/*.4lex | grep -v "+ー" | grep -v "++" | grep -v "×" > $lexicon/lexicon1.txt
+    sort -u $lexicon/lexicon1.txt > $lexicon/lexicon_htk1.txt
+    local/csj_make_trans/vocab2dic.pl -p local/csj_make_trans/kana2phone -e $lexicon/ERROR_v2d -o $lexicon/lexicon2.txt $lexicon/lexicon_htk1.txt
+    # cut -d'+' -f1,3- $lexicon/lexicon.txt >$lexicon/lexicon_htk.txt
+    # cut -f1,3- $lexicon/lexicon_htk.txt | perl -ape 's:\t: :g' >$lexicon/lexicon.txt
+    awk -F'[+\t]' -v OFS='\t' '{print $1,$5}' $lexicon/lexicon2.txt | sort -u | perl -ape 's:\t: :g' >$lexicon/lexicon.txt
 
     if [ -s $lexicon/lexicon.txt ] ;then
       echo -n >$outd/.done_make_lexicon

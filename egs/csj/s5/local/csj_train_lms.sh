@@ -5,6 +5,7 @@
 
 # Copyright 2013  Arnab Ghoshal
 #                 Johns Hopkins University (author: Daniel Povey)
+#	    2019  Jake Tao
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,12 +74,12 @@ export LC_ALL=C
 
 heldout_sent=10000
 cut -d' ' -f2- $text | gzip -c > $dir/train.all.gz
-cut -d' ' -f2- $text | tail -n +$heldout_sent | gzip -c > $dir/train.gz
+# cut -d' ' -f2- $text | tail -n +$heldout_sent | gzip -c > $dir/train.gz
 cut -d' ' -f2- $text | head -n $heldout_sent > $dir/heldout
 
 cut -d' ' -f1 $lexicon > $dir/wordlist
 
-ngram-count -text $dir/train.gz -order 3 -limit-vocab -vocab $dir/wordlist \
+ngram-count -text $dir/train.all.gz -order 3 -limit-vocab -vocab $dir/wordlist \
   -unk -map-unk "<unk>" -kndiscount -interpolate -lm $dir/csj.o3g.kn.gz
 echo "PPL for CSJ LM:"
 ngram -unk -lm $dir/csj.o3g.kn.gz -ppl $dir/heldout

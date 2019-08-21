@@ -3,6 +3,7 @@
 # Copyright  2015 Tokyo Institute of Technology
 #                 (Authors: Takafumi Moriya, Tomohiro Tanaka and Takahiro Shinozaki)
 #            2015 Mitsubishi Electric Research Laboratories (Author: Shinji Watanabe)
+#	     2019 Jake Tao
 # Apache 2.0
 # Acknowledgement  This work was supported by JSPS KAKENHI Grant Number 26280055.
 
@@ -19,10 +20,19 @@
 set -e # exit on error
 
 #: << '#SKIP'
+if [ ! -h conf ]; then
+ ln -s $KALDI_ROOT/egs/csj/s5/conf conf
+fi
+if [ ! -h utils ]; then
+ ln -s $KALDI_ROOT/egs/wsj/s5/utils utils
+fi
+if [ ! -h steps ]; then
+ ln -s $KALDI_ROOT/egs/wsj/s5/steps steps
+fi
 
 use_dev=false # Use the first 4k sentences from training data as dev set. (39 speakers.)
 
-CSJDATATOP=/export/corpora5/CSJ/USB
+CSJDATATOP=/work/jtao/corpora/speech/CSJ-6th
 #CSJDATATOP=/db/laputa1/data/processed/public/CSJ ## CSJ database top directory.
 CSJVER=usb  ## Set your CSJ format (dvd or usb).
             ## Usage    :
@@ -50,10 +60,10 @@ wait
 # mode_number can be 0, 1, 2, 3 (0=default using "Academic lecture" and "other" data, 
 #                                1=using "Academic lecture" data, 
 #                                2=using All data except for "dialog" data, 3=using All data )
-local/csj_data_prep.sh data/csj-data
+# local/csj_data_prep.sh data/csj-data
 # local/csj_data_prep.sh data/csj-data 1
 # local/csj_data_prep.sh data/csj-data 2
-# local/csj_data_prep.sh data/csj-data 3
+local/csj_data_prep.sh data/csj-data 3
 
 local/csj_prepare_dict.sh
 
@@ -64,7 +74,7 @@ local/csj_train_lms.sh data/local/train/text data/local/dict_nosp/lexicon.txt da
 
 # We don't really need all these options for SRILM, since the LM training script
 # does some of the same processing (e.g. -subset -tolower)
-srilm_opts="-subset -prune-lowprobs -unk -tolower -order 3"
+srilm_opts="-subset -prune-lowprobs -unk -order 3"
 LM=data/local/lm/csj.o3g.kn.gz
 utils/format_lm_sri.sh --srilm-opts "$srilm_opts" \
   data/lang_nosp $LM data/local/dict_nosp/lexicon.txt data/lang_nosp_csj_tg
@@ -194,7 +204,7 @@ utils/dict_dir_add_pronprobs.sh --max-normalize true \
 
 utils/prepare_lang.sh data/local/dict "<unk>" data/local/lang data/lang
 LM=data/local/lm/csj.o3g.kn.gz
-srilm_opts="-subset -prune-lowprobs -unk -tolower -order 3"
+srilm_opts="-subset -prune-lowprobs -unk -order 3"
 utils/format_lm_sri.sh --srilm-opts "$srilm_opts" \
   data/lang $LM data/local/dict/lexicon.txt data/lang_csj_tg
 
@@ -243,7 +253,10 @@ steps/align_fmllr.sh --nj 50 --cmd "$train_cmd" \
 # local/nnet/run_dnn.sh
 
 # nnet3 TDNN+Chain 
-local/chain/run_tdnn.sh
+# local/chain/run_tdnn.sh --num-epochs 3 --num-jobs-initial 2 --num-jobs-final 2
+
+# nnet3 TDNN+Chain w/ augmentation
+local/chain/run_tdnn_aug.sh --num-jobs-initial 2 --num-jobs-final 2
 
 # nnet3 TDNN recipe
 # local/nnet3/run_tdnn.sh

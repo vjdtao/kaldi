@@ -2,6 +2,7 @@
 
 # Copyright  2015 Tokyo Institute of Technology (Authors: Takafumi Moriya and Takahiro Shinozaki)
 #            2015 Mitsubishi Electric Research Laboratories (Author: Shinji Watanabe)
+#	     2019 Jake Tao
 # Apache 2.0
 # Acknowledgement  This work was supported by JSPS KAKENHI Grant Number 26280055.
 
@@ -48,11 +49,12 @@ fi
 if [ ! -f $dir/lexicon.txt ]; then
   cp $CSJ/lexicon/lexicon.txt $dir || exit 1;
 fi
+while read x y; do sed -i "s|$x|$y|g" $dir/lexicon.txt; done < local/double2single
 
 ### Config of using wav data that relates with acoustic model training ###
 if [ $mode -eq 3 ]
 then
-  cat $CSJ/*/*/*-wav.list 2>/dev/null | sort > $dir/wav.flist # Using All data
+  cat $CSJ/*/*/*-wav.list $CSJ/*/*/*/*-wav.list 2>/dev/null | sort > $dir/wav.flist # Using All data
 elif [ $mode -eq 2 ]
 then
   cat $CSJ/*/{A*,M*,R*,S*}/*-wav.list 2>/dev/null | sort > $dir/wav.flist # Using All data except for "dialog" data
@@ -82,12 +84,13 @@ awk '{
       name=T[1]; stime=$2; etime=$3;
       printf("%s_%07.0f_%07.0f",name, int(1000*stime), int(1000*etime));
       for(i=4;i<=NF;i++) printf(" %s", tolower($i)); printf "\n"
-}' $CSJ/*/*/*-trans.text |sort > $dir/transcripts1.txt # This data is for training language models
+}' $CSJ/*/*/*-trans.text $CSJ/*/*/*/*-trans.text | sed 's|\+[^[:space:]]* | |g' |sort > $dir/transcripts1.txt # This data is for training language models
 # Except evaluation set (30 speakers)
 
 # test if trans. file is sorted
 export LC_ALL=C;
 sort -c $dir/transcripts1.txt || exit 1; # check it's sorted.
+while read x y; do sed -i "s|$x|$y|g" $dir/transcripts1.txt; done < local/double2single
 
 # Remove Option.
 # **NOTE: modified the pattern matches to make them case insensitive
@@ -111,10 +114,10 @@ awk '{
 sed -e 's?.*/??' -e 's?.wav??' -e 's?\-[R,L]??' $dir/wav.flist | paste - $dir/wav.flist \
   > $dir/wavflist.scp
 
-awk '{
- printf("%s cat %s |\n", $1, $2);
-}' < $dir/wavflist.scp | sort > $dir/wav.scp || exit 1;
-
+# awk '{
+#  printf("%s cat %s |\n", $1, $2);
+# }' < $dir/wavflist.scp | sort > $dir/wav.scp || exit 1;
+sed 's|\t| |g' $dir/wavflist.scp | sort > $dir/wav.scp
 
 awk '{segment=$1; split(segment,S,"[_]"); spkid=S[1]; print $1 " " spkid}' $dir/segments > $dir/utt2spk || exit 1;
 

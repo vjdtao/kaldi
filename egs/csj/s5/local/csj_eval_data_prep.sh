@@ -2,6 +2,7 @@
 
 # Copyright  2015 Tokyo Institute of Technology (Authors: Takafumi Moriya and Takahiro Shinozaki)
 #            2015 Mitsubishi Electric Research Laboratories (Author: Shinji Watanabe)
+#	     2019 Jake Tao
 # Apache 2.0
 # Acknowledgement  This work was supported by JSPS KAKENHI Grant Number 26280055.
 
@@ -31,10 +32,10 @@ n=`cat $dir/wav.flist | wc -l`
 sed -e 's?.*/??' -e 's?.wav??' -e 's?\-[R,L]??' $dir/wav.flist | paste - $dir/wav.flist \
   > $dir/wavflist.scp
 
-awk '{
- printf("%s cat %s |\n", $1, $2);
-}' < $dir/wavflist.scp | sort > $dir/wav.scp || exit 1;
-
+# awk '{
+#  printf("%s cat %s |\n", $1, $2);
+# }' < $dir/wavflist.scp | sort > $dir/wav.scp || exit 1;
+sed 's|\t| |g' $dir/wavflist.scp | sort > $dir/wav.scp
 
 
 
@@ -48,7 +49,8 @@ awk '{
       name=T[1]; stime=$2; etime=$3;
       printf("%s_%07.0f_%07.0f",name, int(1000*stime), int(1000*etime));
       for(i=4;i<=NF;i++) printf(" %s", tolower($i)); printf "\n"
-}' $tdir/$eval_num/*/*-trans.text | sort > $dir/transcripts_${eval_num}.txt
+}' $tdir/$eval_num/*/*-trans.text | sed 's|\+[^[:space:]]* | |g' | sort > $dir/transcripts_${eval_num}.txt
+while read x y; do sed -i "s|$x|$y|g" $dir/transcripts_${eval_num}.txt; done < local/double2single
 
 # Remove option
 cat $dir/transcripts_${eval_num}.txt \

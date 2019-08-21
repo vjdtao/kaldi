@@ -1,8 +1,9 @@
-if [ -z $KALDI_ROOT ]; then
-    export KALDI_ROOT=`pwd`/../../..
-fi
+SPEECHTOOLS=/opt/speech/tools
+export KALDI_ROOT=$SPEECHTOOLS/kaldi/08092019
 
-export PATH=$PWD/utils/:$KALDI_ROOT/tools/openfst/bin:$PWD:$PATH
+LM_ROOT=/opt/nlp/lmtools/srilm-1.7.2
+export PATH=$KALDI_ROOT/egs/wsj/s5/utils/:$SPEECHTOOLS/openfst-1.6.7/bin:$LM_ROOT/bin:$LM_ROOT/bin/i686-m64:$PWD:$PATH
+
 [ ! -f $KALDI_ROOT/tools/config/common_path.sh ] && echo >&2 "The standard file $KALDI_ROOT/tools/config/common_path.sh is not present -> Exit!" && exit 1
 . $KALDI_ROOT/tools/config/common_path.sh
 
